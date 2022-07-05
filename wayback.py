@@ -9,12 +9,22 @@ import shutil
 
 
 class Wayback():
-    def __init__(self,time_code, level, start_x, start_y, size, outName, deleteTiles):
+    def __init__(self, time_code, level, outName, deleteTiles, start_x, start_y,end_x=-1, end_y=-1, size=-1):
         self.time_code = time_code # time_code 入库时间代码
         self.level = level # level 瓦片等级
         self.start_x = start_x # start_x瓦片地图起始编号x
-        self.start_y = start_y # start_y瓦片地图起始编号x
-        self.size = size # 截取影像瓦片的个数，每个瓦片大小为256*256，最终宽幅影像的大小为256*size的平方
+        self.start_y = start_y # start_y瓦片地图起始编号y
+        self.end_x = end_x  # end_x瓦片地图结束编号x
+        self.end_y = end_y  # end_y瓦片地图结束编号y
+        #self.size = size
+        if size==-1:
+            # 设置了结束编号
+            self.rows = self.end_x - self.start_x
+            self.cols = self.end_y - self.start_y
+        else:
+            #未设置结束编号，长宽都为size
+            self.rows = size
+            self.cols = size
         self.outName = outName # 保存的文件名  ***.tiff
         self.save_root = "./tile/" + time_code + "/" # 瓦片地图临时存放路径  ***.tiff
         self.pool = ThreadPoolExecutor(max_workers=80) # 线程池
@@ -30,8 +40,8 @@ class Wayback():
 
 
     def __createTiles(self, base_url):
-        for i in range(self.size):
-            for j in range(self.size):
+        for i in range(self.rows):
+            for j in range(self.cols):
                 name_ = str(i) + "-" + str(j) + ".png"
                 url = base_url + (str(self.start_x + i) + "/" + str(self.start_y + j))
                 img_name = self.save_root + name_
@@ -61,15 +71,19 @@ class Wayback():
 
         self.__createTiles(base_url)
 
-        while count != self.size * self.size:
+
+
+
+        while count != self.rows * self.cols:
             count = len(os.listdir(save_root))
             print(count)
             time.sleep(5)
-            if count == len(os.listdir(save_root)) and count != self.size * self.size:
+            if count == len(os.listdir(save_root)) and count != self.rows * self.cols:
                 self.__createTiles(base_url)
 
-        for i in range(self.size):
-            for j in range(self.size):
+
+        for i in range(self.rows):
+            for j in range(self.cols):
                 name = str(i) + "-" + str(j) + ".png"
                 image = cv2.imread(save_root + name)
                 rows.append(image)
